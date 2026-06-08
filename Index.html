@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Portfolio</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#111827;
+    color:white;
+}
+
+header{
+    text-align:center;
+    padding:50px 20px;
+    background:linear-gradient(135deg,#1e293b,#0f172a);
+}
+
+.character{
+    width:180px;
+    image-rendering:pixelated;
+    border:4px solid #00ffff;
+    border-radius:15px;
+    background:#222;
+    padding:10px;
+    margin-bottom:20px;
+}
+
+h1{
+    font-size:3rem;
+    color:#00ffff;
+}
+
+.subtitle{
+    color:#ccc;
+    margin-top:10px;
+}
+
+section{
+    max-width:1100px;
+    margin:auto;
+    padding:60px 20px;
+}
+
+.section-title{
+    color:#00ffff;
+    margin-bottom:20px;
+    font-size:2rem;
+}
+
+.card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:15px;
+    transition:.3s;
+    border:2px solid transparent;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+    border-color:#00ffff;
+}
+
+.game-image{
+    width:100%;
+    height:150px;
+    background:#0f172a;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.skills{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.skill{
+    background:#00ffff;
+    color:black;
+    padding:10px 15px;
+    border-radius:50px;
+    font-weight:bold;
+}
+
+footer{
+    text-align:center;
+    padding:30px;
+    background:#0f172a;
+}
+
+button{
+    background:#00ffff;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+</style>
+</head>
+<body>
+
+<header>
+
+<img src="liljimmy.png" class="character">
+
+<h1>Jeffry's Portfolio</h1>
+
+<p class="subtitle">
+Game Developer • Programmer • Creator
+</p>
+
+</header>
+
+<section>
+<h2 class="section-title">About Me</h2>
+
+<div class="card">
+<p>
+Welcome to my portfolio! I'm a game developer who enjoys creating browser games,
+pixel art projects, and experimenting with JavaScript and HTML.
+</p>
+</div>
+</section>
+
+<section>
+<h2 class="section-title">Games I've Created</h2>
+
+<div class="card-grid">
+
+<div class="card">
+<div class="game-image"></div>
+<h3>Snake Game</h3>
+<p>A classic snake game made with JavaScript.</p>
+<button onclick="window.location.href='snakegame.html'">Play Now</button>
+</div>
+
+<div class="card">
+<div class="game-image"></div>
+<h3>Pong Game</h3>
+<p>Retro arcade-style pong with sound effects.</p>
+<button onclick="window.location.href='Pong.html'">Play Now</button>
+</div>
+
+<div class="card">
+<div class="game-image"></div>
+<h3>Rift Shooter</h3>
+<p>Fight enemies, earn money, and upgrade gear.</p>
+<button onclick="window.location.href='RiftShooter.html'">Play Now</button>
+</div>
+
+<div class="card">
+<div class="game-image"></div>
+<h3>Dimensional Space</h3>
+<p>Fight enemies and get to the rift before the corruption consumes you.</p>
+<button onclick="window.location.href='DimensionalSpace.html'">Play Now</button>
+</div>
+
+</div>
+</section>
+
+<section>
+<h2 class="section-title">Skills</h2>
+
+<div class="skills">
+<div class="skill">HTML</div>
+<div class="skill">CSS</div>
+<div class="skill">JavaScript</div>
+<div class="skill">Game Design</div>
+<div class="skill">Pixel Art</div>
+<div class="skill">Problem Solving</div>
+</div>
+
+</section>
+
+<section>
+<h2 class="section-title">Contact</h2>
+
+<div class="card">
+<p>Email: your@email.com</p>
+<br>
+<button onclick="alert('Thanks for visiting my portfolio!')">
+Contact Me
+</button>
+</div>
+
+</section>
+
+<footer>
+© 2026 Jeffry's Portfolio
+</footer>
+
+</body>
+</html>
