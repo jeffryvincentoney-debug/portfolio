@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Timekeepers TGC</title>
+
+<style>
+body{
+    background:#0b0f14;
+    color:#00ffd5;
+    font-family:monospace;
+    text-align:center;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.card{
+    border:1px solid #00ffd5;
+    padding:10px;
+    margin:10px;
+    display:inline-block;
+    width:200px;
+    background:#111;
+    border-radius:10px;
+}
+
+button{
+    padding:10px 15px;
+    margin:10px;
+    cursor:pointer;
+    font-family:monospace;
+    background:#00ffd5;
+    border:none;
+    color:#000;
+    font-weight:bold;
+}
+
+#battleLog{
+    text-align:left;
+    height:250px;
+    overflow:auto;
+    background:#000;
+    padding:10px;
+    border-radius:10px;
+    margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⏳ TIMEKEEPERS TGC</h1>
+
+<h2>Player HP: <span id="pHP">30</span> | CPU HP: <span id="cHP">30</span></h2>
+
+<div>
+<button onclick="drawCards()">Draw Cards</button>
+<button onclick="attack()">Attack</button>
+</div>
+
+<h3>Your Cards</h3>
+<div id="playerCards"></div>
+
+<h3>CPU Cards</h3>
+<div id="cpuCards"></div>
+
+<div id="battleLog"></div>
+
+</div>
+
+<script>
+
+// HP SYSTEM
+let playerHP = 30;
+let cpuHP = 30;
+
+let playerCard = null;
+let cpuCard = null;
+
+// CARD GENERATION
+const names = ["Chrono Knight","Time Warden","Void Seer","Era Beast","Paradox Mage","Future Rogue"];
+const powers = ["Double Strike","Heal","Shield","Time Burn","Stun"];
+
+function randomCard(){
+
+let attack = Math.floor(Math.random()*8)+2;
+let defense = Math.floor(Math.random()*8)+2;
+
+let rarityRoll = Math.random();
+let rarity = "Common";
+
+if(rarityRoll > 0.85){
+rarity = "Legendary";
+attack += 3;
+defense += 3;
+}
+else if(rarityRoll > 0.6){
+rarity = "Rare";
+attack += 1;
+defense += 1;
+}
+
+let power = powers[Math.floor(Math.random()*powers.length)];
+let name = names[Math.floor(Math.random()*names.length)];
+let art = ["⏳","⚔️","🌀","🔥","🛡️","🧬"][Math.floor(Math.random()*6)];
+
+return {
+name,
+attack,
+defense,
+rarity,
+power,
+art
+};
+
+}
+
+// DRAW CARDS
+function drawCards(){
+
+playerCard = randomCard();
+cpuCard = randomCard();
+
+renderCards();
+log("🃏 Cards drawn!");
+}
+
+// RENDER
+function renderCards(){
+
+document.getElementById("playerCards").innerHTML =
+cardHTML(playerCard);
+
+document.getElementById("cpuCards").innerHTML =
+cardHTML(cpuCard);
+}
+
+function cardHTML(c){
+if(!c) return "";
+
+return `
+<div class="card">
+<h3>${c.art} ${c.name}</h3>
+<p>Rarity: ${c.rarity}</p>
+<p>ATK: ${c.attack}</p>
+<p>DEF: ${c.defense}</p>
+<p>Power: ${c.power}</p>
+</div>
+`;
+}
+
+// ATTACK SYSTEM
+function attack(){
+
+if(!playerCard || !cpuCard){
+log("⚠ Draw cards first!");
+return;
+}
+
+// PLAYER ATTACK
+let pDamage = playerCard.attack - cpuCard.defense;
+if(pDamage < 0) pDamage = 0;
+
+// CPU ATTACK
+let cDamage = cpuCard.attack - playerCard.defense;
+if(cDamage < 0) cDamage = 0;
+
+// SPECIAL POWERS
+applyPower(playerCard, cpuCard, true);
+applyPower(cpuCard, playerCard, false);
+
+// DAMAGE
+cpuHP -= pDamage;
+playerHP -= cDamage;
+
+// UPDATE UI
+document.getElementById("pHP").textContent = playerHP;
+document.getElementById("cHP").textContent = cpuHP;
+
+log(`⚔ You dealt ${pDamage} damage`);
+log(`💀 CPU dealt ${cDamage} damage`);
+
+checkWin();
+}
+
+// SPECIAL POWERS
+function applyPower(attacker, defender, isPlayer){
+
+switch(attacker.power){
+
+case "Double Strike":
+defender.defense -= 2;
+log("⚡ Double Strike weakens defense!");
+break;
+
+case "Heal":
+if(isPlayer){
+playerHP += 2;
+log("💚 You healed +2 HP");
+}else{
+cpuHP += 2;
+log("💚 CPU healed +2 HP");
+}
+break;
+
+case "Shield":
+attacker.defense += 2;
+log("🛡 Shield increases defense!");
+break;
+
+case "Time Burn":
+if(isPlayer){
+cpuHP -= 2;
+log("🔥 Time Burn hits CPU!");
+}else{
+playerHP -= 2;
+log("🔥 Time Burn hits you!");
+}
+break;
+
+case "Stun":
+log("🌀 Stun disrupts next damage calculation!");
+break;
+
+}
+
+}
+
+// WIN CHECK
+function checkWin(){
+
+if(playerHP <= 0 && cpuHP <= 0){
+log("🤝 Draw!");
+}
+else if(playerHP <= 0){
+log("💀 CPU WINS");
+}
+else if(cpuHP <= 0){
+log("🏆 PLAYER WINS");
+}
+
+}
+
+// LOG
+function log(text){
+let b = document.getElementById("battleLog");
+b.textContent += text + "\n";
+b.scrollTop = b.scrollHeight;
+}
+
+</script>
+
+</body>
+</html>

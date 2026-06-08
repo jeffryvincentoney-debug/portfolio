@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Chronos.exe Escape Room</title>
+<style>
+body{
+    background:#111;
+    color:#0f0;
+    font-family:monospace;
+    text-align:center;
+    padding:20px;
+}
+.room{
+    max-width:800px;
+    margin:auto;
+}
+input{
+    padding:10px;
+    margin:10px;
+}
+button{
+    padding:10px 20px;
+    cursor:pointer;
+}
+#game{
+    margin-top:20px;
+}
+</style>
+</head>
+<body>
+
+<div class="room">
+<h1>CHRONOS.EXE</h1>
+
+<p>
+The Aeternum Artifact has been stolen by Chronos.exe.
+Solve all 5 security puzzles to recover it.
+</p>
+
+<h2 id="title">Puzzle 1</h2>
+
+<div id="game">
+<p id="question"></p>
+
+<input id="answer" type="text">
+<br>
+<button onclick="checkAnswer()">Submit</button>
+</div>
+
+<p id="status"></p>
+</div>
+
+<script>
+let currentPuzzle = 0;
+
+const puzzles = [
+{
+title:"Puzzle 1",
+question:"What is the binary value of 14?",
+answer:"1110"
+},
+{
+title:"Puzzle 2",
+question:"What is the binary value of 936?",
+answer:"1110101000"
+},
+{
+title:"Puzzle 3",
+question:"What is the binary value of 5?",
+answer:"101"
+},
+{
+title:"Puzzle 4",
+question:"What is the binary value of 29?",
+answer:"11101"
+},
+{
+title:"Puzzle 5",
+question:"What is the binary value of 2000 ?",
+answer:"11111010000"
+}
+];
+
+function loadPuzzle(){
+document.getElementById("title").textContent =
+puzzles[currentPuzzle].title;
+
+document.getElementById("question").textContent =
+puzzles[currentPuzzle].question;
+
+document.getElementById("answer").value="";
+}
+
+function checkAnswer(){
+
+let input =
+document.getElementById("answer")
+.value
+.toLowerCase()
+.trim();
+
+if(input===puzzles[currentPuzzle].answer){
+
+currentPuzzle++;
+
+if(currentPuzzle>=puzzles.length){
+
+document.getElementById("game").innerHTML=`
+<h2>ACCESS GRANTED</h2>
+
+<p>
+Chronos.exe has been defeated.
+</p>
+
+<p>
+🏺 You recovered the Aeternum Artifact.
+</p>
+
+<p>
+Timeline stability restored.
+</p>
+
+<h1>YOU ESCAPED</h1>
+`;
+
+return;
+}
+
+document.getElementById("status").textContent =
+"Correct! Moving to next puzzle.";
+
+loadPuzzle();
+
+}else{
+
+document.getElementById("status").textContent =
+"Incorrect. Try again.";
+}
+}
+
+loadPuzzle();
+</script>
+
+</body>
+</html>

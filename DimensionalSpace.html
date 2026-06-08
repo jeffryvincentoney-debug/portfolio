@@ -32,9 +32,9 @@ canvas { display:block; }
 <body>
 
 <div id="ui">
-  <div class="bar-wrap">❤️ <div class="bar"><div class="bar-fill" id="hp-fill"></div></div></div>
-  <div class="bar-wrap">⚔️ <div class="bar"><div class="bar-fill" id="cd-attack-fill"></div></div></div>
-  <div class="bar-wrap">💨 <div class="bar"><div class="bar-fill" id="cd-dash-fill"></div></div></div>
+  <div class="bar-wrap">HP <div class="bar"><div class="bar-fill" id="hp-fill"></div></div></div>
+  <div class="bar-wrap">Atk <div class="bar"><div class="bar-fill" id="cd-attack-fill"></div></div></div>
+  <div class="bar-wrap">Dash <div class="bar"><div class="bar-fill" id="cd-dash-fill"></div></div></div>
   <span id="money">💰 0</span>
 </div>
 
@@ -80,17 +80,16 @@ c.addEventListener("mousemove", e => {
   mouse.y = e.clientY - r.top;
 });
 
-// LMB — set a flag, consume it in update so it never stalls
 c.addEventListener("mousedown", e => {
   if (e.button === 0) mouse.clicked = true;
 });
 
 // ─── constants ───────────────────────────────────────────────────
 const GRAVITY        = 0.8;
-const ATTACK_COOLDOWN = 18;  // frames between attacks
-const DASH_COOLDOWN   = 50;  // frames between dashes
-const DASH_DURATION   = 12;  // frames the dash lasts
-const SLASH_DURATION  = 10;  // frames the slash sprite shows
+const ATTACK_COOLDOWN = 18;
+const DASH_COOLDOWN   = 50;
+const DASH_DURATION   = 12;
+const SLASH_DURATION  = 10;
 
 // ─── state ───────────────────────────────────────────────────────
 let camX      = 0;
@@ -98,6 +97,7 @@ let world     = 1;
 let nearPortal= false;
 let frame     = 0;
 let frameTimer= 0;
+let nearPortal2 = false;
 
 const spawn = { x:100, y:200 };
 
@@ -108,17 +108,22 @@ const player = {
   onGround:false,
   hp:100, money:0,
   facing:1,
-
-  // counters — count DOWN to zero = ready
-  invTimer:   0,   // invincibility frames after hit
-  attackTimer:0,   // counts down; when 0 player CAN attack
-  attackActive:0,  // frames the hitbox stays live
-  dashTimer:  0,   // cooldown countdown
-  dashActive: 0,   // frames the speed boost lasts
-
-  slashTimer: 0,   // frames to show slash sprite
-  slashX:0, slashY:0, slashAngle:0  // where/how to draw it
+  invTimer:   0,
+  attackTimer:0,
+  attackActive:0,
+  dashTimer:  0,
+  dashActive: 0,
+  slashTimer: 0,
+  slashX:0, slashY:0, slashAngle:0
 };
+
+const upgrades = {
+  hpCost: 50,
+  speedCost: 75,
+  damageCost: 100
+};
+
+let damageLevel = 1;
 
 const platforms = [
   {x:0,    y:600, w:5000, h:600},
@@ -129,13 +134,46 @@ const platforms = [
   {x:2000, y:500, w:200,  h:20}
 ];
 
-const enemies = [
-  {x:600,  y:520, w:40, h:40, hp:3, maxHp:3},
-  {x:1000, y:340, w:40, h:40, hp:3, maxHp:3},
-  {x:1500, y:410, w:40, h:40, hp:3, maxHp:3}
+// Fixed spawn points for world 2 enemies
+const ENEMY_SPAWNS = [
+  {x:600,  y:520},
+  {x:1000, y:340},
+  {x:1500, y:410}
 ];
 
-const portal = { x:2800, y:480, w:120, h:120 };
+// Each enemy: active=false in world 1, respawnTimer counts down before reappearing
+const enemies = ENEMY_SPAWNS.map(s => ({
+  x: s.x, y: s.y, w:40, h:40,
+  hp:3, maxHp:3,
+  spawnX: s.x, spawnY: s.y,
+  active: false,       // enemies are inactive until world 2 loads
+  respawnTimer: 0      // counts down frames before respawning
+}));
+
+// World 1 -> World 2
+const portal = {
+  x:2800,
+  y:480,
+  w:120,
+  h:120
+};
+
+// World 2 -> World 1
+const portal2 = {
+  x:2500,
+  y:480,
+  w:120,
+  h:120
+};
+
+const shop = {
+  x:700,
+  y:500,
+  w:100,
+  h:100
+};
+
+let nearShop = false;
 
 // ─── helpers ─────────────────────────────────────────────────────
 function aabb(a,b){
@@ -160,14 +198,22 @@ function reset(){
 function enterPortal(){
   world++;
   spawn.x = 200; spawn.y = 200;
-  portal.x = 9999; // hide old portal
+  portal.x = 9999;
   reset();
+  // Activate enemies now that world 2 has loaded, with a staggered delay
+  if (world === 2) {
+    enemies.forEach((e, i) => {
+      e.active = false;
+      e.hp = e.maxHp;
+      e.x = e.spawnX;
+      e.y = e.spawnY;
+      e.respawnTimer = 90 + i * 30; // stagger: 1.5s, 2s, 2.5s
+    });
+  }
 }
 
 // ─── update ──────────────────────────────────────────────────────
 function update(){
-
-  // ── tick all timers (safe — never blocks) ──
   if (player.invTimer    > 0) player.invTimer--;
   if (player.attackTimer > 0) player.attackTimer--;
   if (player.attackActive> 0) player.attackActive--;
@@ -175,14 +221,12 @@ function update(){
   if (player.dashActive  > 0) player.dashActive--;
   if (player.slashTimer  > 0) player.slashTimer--;
 
-  // ── dash input ──
-  if (keys["shift"] && player.dashTimer === 0){
+  if (keys["q"] && player.dashTimer === 0){
     player.dashActive = DASH_DURATION;
     player.dashTimer  = DASH_COOLDOWN;
-    player.invTimer   = DASH_DURATION; // brief i-frames while dashing
+    player.invTimer   = DASH_DURATION;
   }
 
-  // ── movement ──
   const sp    = player.dashActive > 0 ? 14 : player.speed;
   const moving= keys["a"] || keys["d"];
   player.vx   = 0;
@@ -190,27 +234,22 @@ function update(){
   if (keys["a"]){ player.vx = -sp; player.facing = -1; }
   if (keys["d"]){ player.vx =  sp; player.facing =  1; }
 
-  // ── walk animation ──
   if (moving){
     frameTimer++;
     if (frameTimer > 10){ frame = (frame+1)%2; frameTimer=0; }
   } else { frame=0; frameTimer=0; }
 
-  // ── jump ──
-  if (keys["w"] && player.onGround){
+  if (keys[" "] && player.onGround){
     player.vy      = player.jumpForce;
     player.onGround= false;
   }
 
-  // ── attack (LMB) ──
-  //   mouse.clicked is consumed here so even a fast click registers once
   if (mouse.clicked){
     mouse.clicked = false;
     if (player.attackTimer === 0){
       player.attackTimer  = ATTACK_COOLDOWN;
-      player.attackActive = 8;   // hitbox lives for 8 frames
+      player.attackActive = 8;
 
-      // direction from player CENTER to mouse
       const cx  = player.x + player.w/2;
       const cy  = player.y + player.h/2;
       const dx  = mouse.x - cx;
@@ -225,7 +264,6 @@ function update(){
     }
   }
 
-  // ── physics ──
   player.vy += GRAVITY;
   player.x  += player.vx;
   player.y  += player.vy;
@@ -245,7 +283,6 @@ function update(){
     }
   });
 
-  // ── attack hitbox (relative to player CENTER) ──
   const pcx = player.x + player.w/2;
   const pcy = player.y + player.h/2;
   const dx  = mouse.x - pcx;
@@ -258,50 +295,56 @@ function update(){
     w:50, h:50
   };
 
-  // ── enemies ──
   enemies.forEach(e => {
-    if (e.hp <= 0) return;
+    // World 1: enemies never active
+    if (world === 1) return;
 
-    // fly toward player
+    // Counting down to spawn/respawn
+    if (!e.active) {
+      if (e.respawnTimer > 0) {
+        e.respawnTimer--;
+      } else {
+        e.active = true;
+        e.hp = e.maxHp;
+        e.x = e.spawnX;
+        e.y = e.spawnY;
+      }
+      return;
+    }
+
+    // Active enemy logic
     const ex = e.x + e.w/2, ey = e.y + e.h/2;
     const edx = pcx - ex, edy = pcy - ey;
     const ed  = Math.sqrt(edx*edx+edy*edy) || 1;
     e.x += (edx/ed)*1.8;
     e.y += (edy/ed)*1.2;
 
-    // damage player
     if (aabb(player, e) && player.invTimer === 0){
       player.hp    -= 10;
       player.invTimer = 40;
       player.x    += edx>0 ? -40 : 40;
     }
 
-    // player attacks enemy
     if (player.attackActive > 0 && aabb(hitbox, e)){
       e.hp--;
       if (e.hp <= 0){
         player.money += 10;
-        // respawn enemy further away
-        e.hp  = e.maxHp;
-        e.x  += 600;
+        // Deactivate and set respawn timer (180 frames = 3 seconds)
+        e.active = false;
+        e.respawnTimer = 180;
       }
     }
   });
 
-  // ── death / fall ──
   if (player.hp <= 0 || player.y > 1200) reset();
 
-  // ── camera (smooth follow) ──
   camX += (player.x - camX - 300) * 0.1;
 
-  // ── portal proximity ──
   nearPortal = aabb(player, portal);
 
-  // ── UI bars ──
   document.getElementById("hp-fill").style.width =
     Math.max(0, player.hp) + "%";
 
-  // attack bar: 100% = ready, shrinks when on cooldown
   const atkPct = player.attackTimer === 0
     ? 100
     : (1 - player.attackTimer / ATTACK_COOLDOWN) * 100;
@@ -312,7 +355,7 @@ function update(){
     : (1 - player.dashTimer / DASH_COOLDOWN) * 100;
   document.getElementById("cd-dash-fill").style.width = dashPct + "%";
 
-  document.getElementById("money").textContent = "💰 " + player.money;
+  document.getElementById("money").textContent = "Rift Bits: " + player.money;
   document.getElementById("prompt").style.display = nearPortal ? "block" : "none";
 }
 
@@ -320,26 +363,22 @@ function update(){
 function draw(){
   ctx.clearRect(0,0,c.width,c.height);
 
-  // background — swap per world
-  ctx.drawImage(world === 1 ? bg : bg2, 0, 0, c.width, c.height);
+  // SWAPPED: world 1 now uses bg2, world 2 uses bg
+  ctx.drawImage(world === 1 ? bg2 : bg, 0, 0, c.width, c.height);
 
   ctx.save();
   ctx.translate(-camX, 0);
 
-  // platforms — gray in world 1, green in world 2
-  ctx.fillStyle = world === 1 ? "#7F7F7F" : "#4a8c30";
+  // SWAPPED: world 1 now uses green, world 2 uses gray
+  ctx.fillStyle = world === 1 ? "#4a8c30" : "#7F7F7F";
   platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
-  // portal
   ctx.drawImage(portalImg, portal.x, portal.y, portal.w, portal.h);
 
-  // enemies
   enemies.forEach(e => {
-    if (e.hp <= 0) return;
-    // body
+    if (!e.active) return;
     ctx.fillStyle = "crimson";
     ctx.fillRect(e.x, e.y, e.w, e.h);
-    // health bar above
     const barW = e.w;
     ctx.fillStyle="#333";
     ctx.fillRect(e.x, e.y-8, barW, 5);
@@ -347,7 +386,6 @@ function draw(){
     ctx.fillRect(e.x, e.y-8, barW*(e.hp/e.maxHp), 5);
   });
 
-  // player sprite (flipped when facing left)
   let img = (keys["a"] || keys["d"]) ? (frame===0 ? walk1 : walk2) : idleImg;
   ctx.save();
   if (player.facing === -1){
@@ -358,13 +396,11 @@ function draw(){
   }
   ctx.restore();
 
-  // invincibility flash
   if (player.invTimer > 0 && Math.floor(player.invTimer/4)%2 === 0){
     ctx.fillStyle = "rgba(255,255,255,0.25)";
     ctx.fillRect(player.x, player.y, player.w, player.h);
   }
 
-  // slash effect — drawn centered on the hit point, rotated toward mouse
   if (player.slashTimer > 0){
     const alpha = player.slashTimer / SLASH_DURATION;
     ctx.save();
@@ -377,7 +413,7 @@ function draw(){
     ctx.globalAlpha = 1;
   }
 
-  ctx.restore(); // end camera transform
+  ctx.restore();
 }
 
 // ─── loop ────────────────────────────────────────────────────────

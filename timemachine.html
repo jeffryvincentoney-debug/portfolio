@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Time Machine Simulator</title>
+
+<style>
+body{
+    background:#05070a;
+    color:#00ffcc;
+    font-family:monospace;
+    text-align:center;
+    padding:20px;
+}
+
+.container{
+    max-width:800px;
+    margin:auto;
+    border:1px solid #00ffcc;
+    padding:20px;
+    border-radius:10px;
+}
+
+input, button{
+    padding:10px;
+    margin:5px;
+    font-family:monospace;
+}
+
+button{
+    cursor:pointer;
+    background:#00ffcc;
+    border:none;
+    color:#000;
+    font-weight:bold;
+}
+
+#log{
+    margin-top:20px;
+    text-align:left;
+    height:300px;
+    overflow:auto;
+    background:#111;
+    padding:10px;
+    border-radius:10px;
+    white-space:pre-line;
+}
+
+#bar{
+    width:100%;
+    height:20px;
+    background:#222;
+    border-radius:5px;
+    overflow:hidden;
+    margin-top:10px;
+}
+
+#fill{
+    height:100%;
+    width:100%;
+    background:lime;
+    transition:0.2s;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>🕰️ TIME MACHINE SIMULATOR</h1>
+
+<p>Enter a year:</p>
+<input id="yearInput" type="number" placeholder="e.g. 1200">
+<button onclick="travel()">TRAVEL</button>
+
+<h3>Timeline Stability</h3>
+<div id="bar"><div id="fill"></div></div>
+<p id="stableText">100%</p>
+
+<div style="margin-top:10px;">
+<button onclick="stabilize()">🛠 Stabilize</button>
+<button onclick="observe()">👁 Observe</button>
+<button onclick="interfere()">⚠ Interfere</button>
+</div>
+
+<div id="log"></div>
+</div>
+
+<script>
+
+let stability = 100;
+let currentYear = null;
+let timer = null;
+let seconds = 0;
+
+// ERA SYSTEM (NOT RANDOM — deterministic difficulty)
+function eraPressure(year){
+
+year = parseInt(year);
+
+if(year < 0) return 6;
+if(year < 500) return 5;
+if(year < 1500) return 4;
+if(year < 1900) return 3;
+if(year < 2000) return 2;
+if(year < 2100) return 3;
+return 5;
+
+}
+
+// fixed lore events per era
+function eraEvent(year){
+
+year = parseInt(year);
+
+if(year < 0) return "🦖 Survival-only prehistoric Earth";
+if(year < 500) return "🏛 Ancient empires expand and collapse";
+if(year < 1500) return "⚔ Medieval wars reshape kingdoms";
+if(year < 1900) return "🏭 Industrial revolution accelerates time distortion";
+if(year < 2000) return "📡 Modern global systems active";
+if(year < 2100) return "🚀 Early space colonization begins";
+return "🌀 Unknown future timeline zone";
+
+}
+
+function travel(){
+
+let year = document.getElementById("yearInput").value;
+
+if(!year){
+log("⚠ Enter a valid year.");
+return;
+}
+
+currentYear = year;
+stability = 100;
+seconds = 0;
+
+log("\n🚀 TRAVELING TO YEAR " + year);
+log("📍 " + eraEvent(year));
+
+clearInterval(timer);
+
+timer = setInterval(() => {
+
+seconds++;
+
+// main mechanic: time spent = instability
+let drain = eraPressure(currentYear);
+
+stability -= drain;
+stability -= 0.5; // passive decay
+
+if(stability < 0) stability = 0;
+
+log("⏳ t+" + seconds + "s | Stability: " + Math.floor(stability) + "%");
+
+updateUI();
+
+if(stability <= 0){
+clearInterval(timer);
+collapse();
+}
+
+}, 1000);
+
+updateUI();
+}
+
+function stabilize(){
+if(!currentYear) return;
+
+stability += 10;
+if(stability > 100) stability = 100;
+
+log("🛠 You stabilize the timeline (+10)");
+updateUI();
+}
+
+function observe(){
+if(!currentYear) return;
+function observe(){
+if(!currentYear) return;
+
+// small stability gain (safe action)
+stability += 3;
+if(stability > 100) stability = 100;
+
+// era-based historical insight
+let year = parseInt(currentYear);
+let lore = "";
+
+if(year < 0){
+lore = "🦖 You observe early human survival patterns and predator dominance.";
+}
+else if(year < 500){
+lore = "🏛 You witness the rise and fall of ancient empires and early written language.";
+}
+else if(year < 1500){
+lore = "⚔ You observe feudal kingdoms, crusades, and shifting borders across continents.";
+}
+else if(year < 1900){
+lore = "🏭 Industrial expansion reshapes society, replacing labor with machines.";
+}
+else if(year < 2000){
+lore = "📡 Global communication networks begin linking every civilization together.";
+}
+else if(year < 2100){
+lore = "🚀 Early space programs hint at humanity leaving Earth for the first time.";
+}
+else{
+lore = "🌀 Time behaves unpredictably — history records begin to break down.";
+}
+
+// log both effect + lore
+log("👁 You observe the timeline (+3 stability)");
+log("📜 HISTORY: " + lore);
+
+updateUI();
+}
+
+stability += 3;
+log("👁 You observe carefully (+3)");
+updateUI();
+}
+
+function interfere(){
+if(!currentYear) return;
+
+stability -= 12;
+log("⚠ You altered history (-12)");
+updateUI();
+}
+
+function collapse(){
+log("\n💀 TIMELINE COLLAPSE");
+log("🕳 You stayed too long in this era.");
+
+document.body.style.background = "#000";
+document.body.style.color = "red";
+}
+
+function updateUI(){
+
+document.getElementById("fill").style.width = stability + "%";
+document.getElementById("stableText").textContent =
+Math.floor(stability) + "%";
+
+let bar = document.getElementById("fill");
+
+if(stability > 60) bar.style.background = "lime";
+else if(stability > 30) bar.style.background = "orange";
+else bar.style.background = "red";
+
+}
+
+function log(text){
+let l = document.getElementById("log");
+l.textContent += text + "\n";
+l.scrollTop = l.scrollHeight;
+}
+
+updateUI();
+
+</script>
+
+</body>
+</html>
